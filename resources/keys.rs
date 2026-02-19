@@ -9,7 +9,6 @@
 //! | POST   | /yeti-applications/keys             | Generate new keypair     |
 //! | DELETE | /yeti-applications/keys/{name}      | Remove keypair           |
 
-use std::path::PathBuf;
 use yeti_core::prelude::*;
 
 pub type Keys = KeysResource;
@@ -17,38 +16,9 @@ pub type Keys = KeysResource;
 #[derive(Default)]
 pub struct KeysResource;
 
-/// Get the keys directory path: ~/yeti/keys/
-fn keys_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("keys")
-}
-
-/// Validate key name format: [a-z0-9][a-z0-9-]*[a-z0-9]
-fn validate_key_name(name: &str) -> std::result::Result<(), String> {
-    if name.len() < 2 {
-        return Err("key name must be at least 2 characters".to_string());
-    }
-    if !name.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') {
-        return Err("key name must contain only lowercase letters, digits, and hyphens".to_string());
-    }
-    if name.starts_with('-') || name.ends_with('-') {
-        return Err("key name must not start or end with a hyphen".to_string());
-    }
-    Ok(())
-}
-
 /// Ensure keys directory exists with 0700 permissions
-fn ensure_keys_dir() -> std::result::Result<PathBuf, String> {
-    let dir = keys_dir();
+fn ensure_get_keys_directory() -> std::result::Result<PathBuf, String> {
+    let dir = get_keys_directory();
     if !dir.exists() {
         std::fs::create_dir_all(&dir)
             .map_err(|e| format!("Failed to create keys directory: {}", e))?;
@@ -76,12 +46,11 @@ impl Resource for KeysResource {
     }
 
     get!(_request, ctx, {
-        let dir = keys_dir();
+        let dir = get_keys_directory();
 
         // Single key by path ID
         if let Some(key_name) = ctx.path_id() {
-            validate_key_name(key_name)
-                .map_err(|e| YetiError::Validation(e))?;
+            validate_identifier(key_name, "key name")?;
 
             let pub_path = dir.join(format!("{}.pub", key_name));
             if !pub_path.exists() {
@@ -140,10 +109,9 @@ impl Resource for KeysResource {
         let body = request.json_value()?;
         let name = body.require_str("name")?;
 
-        validate_key_name(&name)
-            .map_err(|e| YetiError::Validation(e))?;
+        validate_identifier(&name, "key name")?;
 
-        let dir = ensure_keys_dir()
+        let dir = ensure_get_keys_directory()
             .map_err(|e| YetiError::Internal(e))?;
 
         let key_path = dir.join(&name);
@@ -189,10 +157,9 @@ impl Resource for KeysResource {
     delete!(_request, ctx, {
         let key_name = ctx.require_id()?.to_string();
 
-        validate_key_name(&key_name)
-            .map_err(|e| YetiError::Validation(e))?;
+        validate_identifier(&key_name, "key name")?;
 
-        let dir = keys_dir();
+        let dir = get_keys_directory();
         let key_path = dir.join(&key_name);
         let pub_path = dir.join(format!("{}.pub", &key_name));
 

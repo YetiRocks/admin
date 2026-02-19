@@ -10,57 +10,13 @@
 //! | PUT    | /yeti-applications/apps/{id}     | Update app config.yaml         |
 //! | DELETE | /yeti-applications/apps/{id}     | Remove app directory           |
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use yeti_core::prelude::*;
 
 pub type Apps = AppsResource;
 
 #[derive(Default)]
 pub struct AppsResource;
-
-/// Get the applications directory path
-fn apps_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("applications")
-}
-
-/// Get the cache directory path
-fn cache_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("cache").join("builds")
-}
-
-/// Validate app_id format: [a-z0-9][a-z0-9-]*[a-z0-9]
-fn validate_app_id(id: &str) -> std::result::Result<(), String> {
-    if id.len() < 2 {
-        return Err("app_id must be at least 2 characters".to_string());
-    }
-    if !id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') {
-        return Err("app_id must contain only lowercase letters, digits, and hyphens".to_string());
-    }
-    if id.starts_with('-') || id.ends_with('-') {
-        return Err("app_id must not start or end with a hyphen".to_string());
-    }
-    Ok(())
-}
 
 /// Recursively copy a template directory, skipping build artifacts
 fn copy_template(src: &Path, dst: &Path) -> std::io::Result<()> {
@@ -147,7 +103,7 @@ impl Resource for AppsResource {
     }
 
     get!(_request, ctx, {
-        let apps_path = apps_dir();
+        let apps_path = get_apps_directory();
 
         // Single app by path ID
         if let Some(app_id) = ctx.path_id() {
@@ -231,13 +187,12 @@ impl Resource for AppsResource {
         let body = request.json_value()?;
         let app_id = body.require_str("id")?;
 
-        validate_app_id(&app_id)
-            .map_err(|e| YetiError::Validation(e))?;
+        validate_identifier(&app_id, "app_id")?;
 
         let name = body.get("name").and_then(|v| v.as_str()).unwrap_or(&app_id);
         let description = body.get("description").and_then(|v| v.as_str()).unwrap_or("A new Yeti application");
 
-        let apps_path = apps_dir();
+        let apps_path = get_apps_directory();
         let app_path = apps_path.join(&app_id);
 
         if app_path.exists() {
@@ -345,7 +300,7 @@ static_files:
         let app_id = ctx.require_id()?.to_string();
         let body = request.json_value()?;
 
-        let apps_path = apps_dir();
+        let apps_path = get_apps_directory();
         let app_path = apps_path.join(&app_id);
         let config_path = app_path.join("config.yaml");
 
@@ -399,7 +354,7 @@ static_files:
             return bad_request("Cannot delete the yeti-applications app");
         }
 
-        let apps_path = apps_dir();
+        let apps_path = get_apps_directory();
         let app_path = apps_path.join(&app_id);
 
         if !app_path.is_dir() {
@@ -411,7 +366,7 @@ static_files:
             .map_err(|e| YetiError::Internal(format!("Failed to remove app directory: {}", e)))?;
 
         // Also remove cache directory if it exists
-        let cache_path = cache_dir().join(&app_id);
+        let cache_path = get_cache_directory().join(&app_id);
         if cache_path.is_dir() {
             let _ = std::fs::remove_dir_all(&cache_path);
         }

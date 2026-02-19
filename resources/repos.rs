@@ -9,57 +9,12 @@
 //! | POST   | /yeti-applications/repos/pull/{app_id}        | Pull latest for an app   |
 //! | GET    | /yeti-applications/repos/status/{app_id}      | Git status for an app    |
 
-use std::path::PathBuf;
 use yeti_core::prelude::*;
 
 pub type Repos = ReposResource;
 
 #[derive(Default)]
 pub struct ReposResource;
-
-/// Get the applications directory path
-fn apps_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("applications")
-}
-
-/// Get the keys directory path
-fn keys_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("keys")
-}
-
-/// Validate app_id format: [a-z0-9][a-z0-9-]*[a-z0-9]
-fn validate_app_id(id: &str) -> std::result::Result<(), String> {
-    if id.len() < 2 {
-        return Err("app_id must be at least 2 characters".to_string());
-    }
-    if !id.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-') {
-        return Err("app_id must contain only lowercase letters, digits, and hyphens".to_string());
-    }
-    if id.starts_with('-') || id.ends_with('-') {
-        return Err("app_id must not start or end with a hyphen".to_string());
-    }
-    Ok(())
-}
 
 /// Validate git URL format (must start with git@ or https://)
 fn validate_git_url(url: &str) -> std::result::Result<(), String> {
@@ -94,7 +49,7 @@ fn extract_repo_name(url: &str) -> Option<String> {
 
 /// Build GIT_SSH_COMMAND for a named key
 fn git_ssh_command(key_name: &str) -> std::result::Result<String, String> {
-    let key_path = keys_dir().join(key_name);
+    let key_path = get_keys_directory().join(key_name);
     if !key_path.exists() {
         return Err(format!("SSH key '{}' not found", key_name));
     }
@@ -150,10 +105,9 @@ impl Resource for ReposResource {
             return bad_request("Use /repos/status/{app_id}");
         };
 
-        validate_app_id(&app_id)
-            .map_err(|e| YetiError::Validation(e))?;
+        validate_identifier(&app_id, "app_id")?;
 
-        let app_path = apps_dir().join(&app_id);
+        let app_path = get_apps_directory().join(&app_id);
         if !app_path.is_dir() {
             return not_found(&format!("Application '{}' not found", app_id));
         }
@@ -250,10 +204,9 @@ impl Resource for ReposResource {
                 .or_else(|| extract_repo_name(&url))
                 .ok_or_else(|| YetiError::Validation("Cannot determine app_id from URL, please provide 'app_id'".to_string()))?;
 
-            validate_app_id(&app_id)
-                .map_err(|e| YetiError::Validation(e))?;
+            validate_identifier(&app_id, "app_id")?;
 
-            let app_path = apps_dir().join(&app_id);
+            let app_path = get_apps_directory().join(&app_id);
             if app_path.exists() {
                 return bad_request(&format!("Application '{}' already exists", app_id));
             }
@@ -287,10 +240,9 @@ impl Resource for ReposResource {
                 .ok_or_else(|| YetiError::Validation("App ID required in path (use /repos/pull/{app_id})".to_string()))?
                 .to_string();
 
-            validate_app_id(&app_id)
-                .map_err(|e| YetiError::Validation(e))?;
+            validate_identifier(&app_id, "app_id")?;
 
-            let app_path = apps_dir().join(&app_id);
+            let app_path = get_apps_directory().join(&app_id);
             if !app_path.is_dir() {
                 return not_found(&format!("Application '{}' not found", app_id));
             }
