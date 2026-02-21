@@ -17,36 +17,26 @@ Unified admin panel for Yeti. Consolidates application management, authenticatio
 ## Features
 
 ### Applications
-- **Application Grid** — Card-based overview of all apps with status, extension badges, and table counts
-- **Data Browser** — Server-side paginated table viewer (25 rows/page) using FIQL queries, with columns from schema field definitions
-- **Database Nav** — Sidebar grouping tables by database with record counts
-- **Config Viewer** — Readonly JSON display of app configuration
-- **Application CRUD** — List, create, update, and delete applications via REST API
-- **File Browser** — Browse, create, edit, and delete application files with path traversal protection
+- **Application Mmanagement** — List, Manage, Add, and Delete Applications, their configs, their code, and their data
 - **Git Integration** — Clone repos, pull updates, check status
 - **SSH Key Management** — Generate ED25519 deploy keys for private repos
-- **Template Support** — Create apps from the application-template or from scratch
-- **Hot Reload** — Changes take effect immediately (Yeti auto-detects new/modified apps)
 
 ### Auth
-- **Dashboard** — Summary counts for users, roles, and OAuth providers
 - **User Management** — Create, edit, and delete users
 - **Role Management** — Configure roles and permissions
 - **OAuth Providers** — Manage OAuth provider configurations
 
 ### Telemetry
-- **Live Logs** — Real-time log streaming via SSE with level filtering (TRACE through ERROR) and search
+- **Logs** — Real-time log streaming via SSE with level filtering (TRACE through ERROR) and search
 - **Spans** — Distributed trace span viewer with live updates
 - **Metrics** — Real-time metrics display
-- **Connector Management** — Configure telemetry export to Grafana, Datadog, OTLP, Splunk, Elasticsearch, or custom endpoints
+- **Connectors** — Configure telemetry export to Grafana, Datadog, OTLP, Splunk, Elasticsearch, or custom endpoints
 
 ### Vectors
-- **Status Dashboard** — View vector search extension status and configuration
+- **Model Management** — Manage vector models and search status
 
 ### Benchmarks
 - **Test Grid** — Card-based UI for 11 benchmark tests (REST, GraphQL, Vector, WebSocket, SSE, Blob)
-- **Live Progress** — Warmup and running state with elapsed time tracking
-- **Configurable** — Adjust duration and virtual users per test
 - **History** — View past run results with throughput and latency metrics
 
 ## Installation
