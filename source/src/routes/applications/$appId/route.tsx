@@ -3,7 +3,7 @@ import { api, BASE } from '../../../api'
 import { AppDetail, SchemaInfo, PaginatedResponse } from '../../../types'
 import { DatabaseNav, groupTablesByDatabase } from '../../../components/DatabaseNav'
 
-export const Route = createFileRoute('/app/$appId')({
+export const Route = createFileRoute('/applications/$appId')({
   loader: async ({ params }) => {
     const [detail, schema] = await Promise.all([
       api<AppDetail>(`${BASE}/apps/${params.appId}`),
@@ -60,7 +60,7 @@ function AppLayout() {
         <div className="subnav">
           {firstDb && firstTable && (
             <Link
-              to="/app/$appId/data/$database/$table"
+              to="/applications/$appId/data/$database/$table"
               params={{ appId, database: firstDb, table: firstTable }}
               className={`subnav-link ${isData ? 'active' : ''}`}
             >
@@ -68,7 +68,7 @@ function AppLayout() {
             </Link>
           )}
           <Link
-            to="/app/$appId/config"
+            to="/applications/$appId/config"
             params={{ appId }}
             className={`subnav-link ${isConfig ? 'active' : ''}`}
           >

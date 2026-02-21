@@ -1,28 +1,27 @@
-# Application metadata
-name: "Yeti Applications"
-app_id: "yeti-applications"
+name: "Yeti Admin"
+app_id: "yeti-admin"
 version: "1.0.0"
-description: "Application manager for viewing, editing, and configuring all Yeti applications"
-
-# Application state
+description: "Unified admin panel — applications, auth, telemetry, vectors, benchmarks"
 enabled: true
+route_prefix: /admin
 
-# Schema (tables)
 schemas:
   - schema.graphql
 
-# Custom resources (Rust plugins)
 resources:
   - resources/*.rs
 
-# Static file serving
 static_files:
   path: web
   route: /
+  index: index.html
+  notFound:
+    file: index.html
+    statusCode: 200
   build:
     sourceDir: source
     command: npm run build
-# Extensions this app uses
+
 extensions:
   - yeti-auth:
       oauth:
@@ -30,8 +29,9 @@ extensions:
           - strategy: provider
             pattern: "google"
             role: admin
+  - yeti-vectors:
+      fields: []
 
-# Dependencies
 dependencies:
   serde_yaml:
     version: "0.9"

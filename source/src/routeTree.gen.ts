@@ -10,85 +10,189 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppAppIdRouteRouteImport } from './routes/app/$appId/route'
-import { Route as AppAppIdIndexRouteImport } from './routes/app/$appId/index'
-import { Route as AppAppIdConfigRouteImport } from './routes/app/$appId/config'
-import { Route as AppAppIdDataDatabaseTableRouteImport } from './routes/app/$appId/data/$database.$table'
+import { Route as VectorsIndexRouteImport } from './routes/vectors/index'
+import { Route as TelemetryIndexRouteImport } from './routes/telemetry/index'
+import { Route as BenchmarksIndexRouteImport } from './routes/benchmarks/index'
+import { Route as AuthIndexRouteImport } from './routes/auth/index'
+import { Route as ApplicationsIndexRouteImport } from './routes/applications/index'
+import { Route as AuthUsersRouteImport } from './routes/auth/users'
+import { Route as AuthRolesRouteImport } from './routes/auth/roles'
+import { Route as AuthOauthRouteImport } from './routes/auth/oauth'
+import { Route as ApplicationsAppIdRouteRouteImport } from './routes/applications/$appId/route'
+import { Route as ApplicationsAppIdIndexRouteImport } from './routes/applications/$appId/index'
+import { Route as ApplicationsAppIdConfigRouteImport } from './routes/applications/$appId/config'
+import { Route as ApplicationsAppIdDataDatabaseTableRouteImport } from './routes/applications/$appId/data/$database.$table'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppAppIdRouteRoute = AppAppIdRouteRouteImport.update({
-  id: '/app/$appId',
-  path: '/app/$appId',
+const VectorsIndexRoute = VectorsIndexRouteImport.update({
+  id: '/vectors/',
+  path: '/vectors/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppAppIdIndexRoute = AppAppIdIndexRouteImport.update({
+const TelemetryIndexRoute = TelemetryIndexRouteImport.update({
+  id: '/telemetry/',
+  path: '/telemetry/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BenchmarksIndexRoute = BenchmarksIndexRouteImport.update({
+  id: '/benchmarks/',
+  path: '/benchmarks/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthIndexRoute = AuthIndexRouteImport.update({
+  id: '/auth/',
+  path: '/auth/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsIndexRoute = ApplicationsIndexRouteImport.update({
+  id: '/applications/',
+  path: '/applications/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthUsersRoute = AuthUsersRouteImport.update({
+  id: '/auth/users',
+  path: '/auth/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRolesRoute = AuthRolesRouteImport.update({
+  id: '/auth/roles',
+  path: '/auth/roles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOauthRoute = AuthOauthRouteImport.update({
+  id: '/auth/oauth',
+  path: '/auth/oauth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsAppIdRouteRoute = ApplicationsAppIdRouteRouteImport.update({
+  id: '/applications/$appId',
+  path: '/applications/$appId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationsAppIdIndexRoute = ApplicationsAppIdIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AppAppIdRouteRoute,
+  getParentRoute: () => ApplicationsAppIdRouteRoute,
 } as any)
-const AppAppIdConfigRoute = AppAppIdConfigRouteImport.update({
+const ApplicationsAppIdConfigRoute = ApplicationsAppIdConfigRouteImport.update({
   id: '/config',
   path: '/config',
-  getParentRoute: () => AppAppIdRouteRoute,
+  getParentRoute: () => ApplicationsAppIdRouteRoute,
 } as any)
-const AppAppIdDataDatabaseTableRoute =
-  AppAppIdDataDatabaseTableRouteImport.update({
+const ApplicationsAppIdDataDatabaseTableRoute =
+  ApplicationsAppIdDataDatabaseTableRouteImport.update({
     id: '/data/$database/$table',
     path: '/data/$database/$table',
-    getParentRoute: () => AppAppIdRouteRoute,
+    getParentRoute: () => ApplicationsAppIdRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app/$appId': typeof AppAppIdRouteRouteWithChildren
-  '/app/$appId/config': typeof AppAppIdConfigRoute
-  '/app/$appId/': typeof AppAppIdIndexRoute
-  '/app/$appId/data/$database/$table': typeof AppAppIdDataDatabaseTableRoute
+  '/applications/$appId': typeof ApplicationsAppIdRouteRouteWithChildren
+  '/auth/oauth': typeof AuthOauthRoute
+  '/auth/roles': typeof AuthRolesRoute
+  '/auth/users': typeof AuthUsersRoute
+  '/applications/': typeof ApplicationsIndexRoute
+  '/auth/': typeof AuthIndexRoute
+  '/benchmarks/': typeof BenchmarksIndexRoute
+  '/telemetry/': typeof TelemetryIndexRoute
+  '/vectors/': typeof VectorsIndexRoute
+  '/applications/$appId/config': typeof ApplicationsAppIdConfigRoute
+  '/applications/$appId/': typeof ApplicationsAppIdIndexRoute
+  '/applications/$appId/data/$database/$table': typeof ApplicationsAppIdDataDatabaseTableRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app/$appId/config': typeof AppAppIdConfigRoute
-  '/app/$appId': typeof AppAppIdIndexRoute
-  '/app/$appId/data/$database/$table': typeof AppAppIdDataDatabaseTableRoute
+  '/auth/oauth': typeof AuthOauthRoute
+  '/auth/roles': typeof AuthRolesRoute
+  '/auth/users': typeof AuthUsersRoute
+  '/applications': typeof ApplicationsIndexRoute
+  '/auth': typeof AuthIndexRoute
+  '/benchmarks': typeof BenchmarksIndexRoute
+  '/telemetry': typeof TelemetryIndexRoute
+  '/vectors': typeof VectorsIndexRoute
+  '/applications/$appId/config': typeof ApplicationsAppIdConfigRoute
+  '/applications/$appId': typeof ApplicationsAppIdIndexRoute
+  '/applications/$appId/data/$database/$table': typeof ApplicationsAppIdDataDatabaseTableRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app/$appId': typeof AppAppIdRouteRouteWithChildren
-  '/app/$appId/config': typeof AppAppIdConfigRoute
-  '/app/$appId/': typeof AppAppIdIndexRoute
-  '/app/$appId/data/$database/$table': typeof AppAppIdDataDatabaseTableRoute
+  '/applications/$appId': typeof ApplicationsAppIdRouteRouteWithChildren
+  '/auth/oauth': typeof AuthOauthRoute
+  '/auth/roles': typeof AuthRolesRoute
+  '/auth/users': typeof AuthUsersRoute
+  '/applications/': typeof ApplicationsIndexRoute
+  '/auth/': typeof AuthIndexRoute
+  '/benchmarks/': typeof BenchmarksIndexRoute
+  '/telemetry/': typeof TelemetryIndexRoute
+  '/vectors/': typeof VectorsIndexRoute
+  '/applications/$appId/config': typeof ApplicationsAppIdConfigRoute
+  '/applications/$appId/': typeof ApplicationsAppIdIndexRoute
+  '/applications/$appId/data/$database/$table': typeof ApplicationsAppIdDataDatabaseTableRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/app/$appId'
-    | '/app/$appId/config'
-    | '/app/$appId/'
-    | '/app/$appId/data/$database/$table'
+    | '/applications/$appId'
+    | '/auth/oauth'
+    | '/auth/roles'
+    | '/auth/users'
+    | '/applications/'
+    | '/auth/'
+    | '/benchmarks/'
+    | '/telemetry/'
+    | '/vectors/'
+    | '/applications/$appId/config'
+    | '/applications/$appId/'
+    | '/applications/$appId/data/$database/$table'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/app/$appId/config'
-    | '/app/$appId'
-    | '/app/$appId/data/$database/$table'
+    | '/auth/oauth'
+    | '/auth/roles'
+    | '/auth/users'
+    | '/applications'
+    | '/auth'
+    | '/benchmarks'
+    | '/telemetry'
+    | '/vectors'
+    | '/applications/$appId/config'
+    | '/applications/$appId'
+    | '/applications/$appId/data/$database/$table'
   id:
     | '__root__'
     | '/'
-    | '/app/$appId'
-    | '/app/$appId/config'
-    | '/app/$appId/'
-    | '/app/$appId/data/$database/$table'
+    | '/applications/$appId'
+    | '/auth/oauth'
+    | '/auth/roles'
+    | '/auth/users'
+    | '/applications/'
+    | '/auth/'
+    | '/benchmarks/'
+    | '/telemetry/'
+    | '/vectors/'
+    | '/applications/$appId/config'
+    | '/applications/$appId/'
+    | '/applications/$appId/data/$database/$table'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppAppIdRouteRoute: typeof AppAppIdRouteRouteWithChildren
+  ApplicationsAppIdRouteRoute: typeof ApplicationsAppIdRouteRouteWithChildren
+  AuthOauthRoute: typeof AuthOauthRoute
+  AuthRolesRoute: typeof AuthRolesRoute
+  AuthUsersRoute: typeof AuthUsersRoute
+  ApplicationsIndexRoute: typeof ApplicationsIndexRoute
+  AuthIndexRoute: typeof AuthIndexRoute
+  BenchmarksIndexRoute: typeof BenchmarksIndexRoute
+  TelemetryIndexRoute: typeof TelemetryIndexRoute
+  VectorsIndexRoute: typeof VectorsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -100,56 +204,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/$appId': {
-      id: '/app/$appId'
-      path: '/app/$appId'
-      fullPath: '/app/$appId'
-      preLoaderRoute: typeof AppAppIdRouteRouteImport
+    '/vectors/': {
+      id: '/vectors/'
+      path: '/vectors'
+      fullPath: '/vectors/'
+      preLoaderRoute: typeof VectorsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/$appId/': {
-      id: '/app/$appId/'
+    '/telemetry/': {
+      id: '/telemetry/'
+      path: '/telemetry'
+      fullPath: '/telemetry/'
+      preLoaderRoute: typeof TelemetryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/benchmarks/': {
+      id: '/benchmarks/'
+      path: '/benchmarks'
+      fullPath: '/benchmarks/'
+      preLoaderRoute: typeof BenchmarksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/': {
+      id: '/auth/'
+      path: '/auth'
+      fullPath: '/auth/'
+      preLoaderRoute: typeof AuthIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/': {
+      id: '/applications/'
+      path: '/applications'
+      fullPath: '/applications/'
+      preLoaderRoute: typeof ApplicationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/users': {
+      id: '/auth/users'
+      path: '/auth/users'
+      fullPath: '/auth/users'
+      preLoaderRoute: typeof AuthUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/roles': {
+      id: '/auth/roles'
+      path: '/auth/roles'
+      fullPath: '/auth/roles'
+      preLoaderRoute: typeof AuthRolesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/oauth': {
+      id: '/auth/oauth'
+      path: '/auth/oauth'
+      fullPath: '/auth/oauth'
+      preLoaderRoute: typeof AuthOauthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/$appId': {
+      id: '/applications/$appId'
+      path: '/applications/$appId'
+      fullPath: '/applications/$appId'
+      preLoaderRoute: typeof ApplicationsAppIdRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/applications/$appId/': {
+      id: '/applications/$appId/'
       path: '/'
-      fullPath: '/app/$appId/'
-      preLoaderRoute: typeof AppAppIdIndexRouteImport
-      parentRoute: typeof AppAppIdRouteRoute
+      fullPath: '/applications/$appId/'
+      preLoaderRoute: typeof ApplicationsAppIdIndexRouteImport
+      parentRoute: typeof ApplicationsAppIdRouteRoute
     }
-    '/app/$appId/config': {
-      id: '/app/$appId/config'
+    '/applications/$appId/config': {
+      id: '/applications/$appId/config'
       path: '/config'
-      fullPath: '/app/$appId/config'
-      preLoaderRoute: typeof AppAppIdConfigRouteImport
-      parentRoute: typeof AppAppIdRouteRoute
+      fullPath: '/applications/$appId/config'
+      preLoaderRoute: typeof ApplicationsAppIdConfigRouteImport
+      parentRoute: typeof ApplicationsAppIdRouteRoute
     }
-    '/app/$appId/data/$database/$table': {
-      id: '/app/$appId/data/$database/$table'
+    '/applications/$appId/data/$database/$table': {
+      id: '/applications/$appId/data/$database/$table'
       path: '/data/$database/$table'
-      fullPath: '/app/$appId/data/$database/$table'
-      preLoaderRoute: typeof AppAppIdDataDatabaseTableRouteImport
-      parentRoute: typeof AppAppIdRouteRoute
+      fullPath: '/applications/$appId/data/$database/$table'
+      preLoaderRoute: typeof ApplicationsAppIdDataDatabaseTableRouteImport
+      parentRoute: typeof ApplicationsAppIdRouteRoute
     }
   }
 }
 
-interface AppAppIdRouteRouteChildren {
-  AppAppIdConfigRoute: typeof AppAppIdConfigRoute
-  AppAppIdIndexRoute: typeof AppAppIdIndexRoute
-  AppAppIdDataDatabaseTableRoute: typeof AppAppIdDataDatabaseTableRoute
+interface ApplicationsAppIdRouteRouteChildren {
+  ApplicationsAppIdConfigRoute: typeof ApplicationsAppIdConfigRoute
+  ApplicationsAppIdIndexRoute: typeof ApplicationsAppIdIndexRoute
+  ApplicationsAppIdDataDatabaseTableRoute: typeof ApplicationsAppIdDataDatabaseTableRoute
 }
 
-const AppAppIdRouteRouteChildren: AppAppIdRouteRouteChildren = {
-  AppAppIdConfigRoute: AppAppIdConfigRoute,
-  AppAppIdIndexRoute: AppAppIdIndexRoute,
-  AppAppIdDataDatabaseTableRoute: AppAppIdDataDatabaseTableRoute,
-}
+const ApplicationsAppIdRouteRouteChildren: ApplicationsAppIdRouteRouteChildren =
+  {
+    ApplicationsAppIdConfigRoute: ApplicationsAppIdConfigRoute,
+    ApplicationsAppIdIndexRoute: ApplicationsAppIdIndexRoute,
+    ApplicationsAppIdDataDatabaseTableRoute:
+      ApplicationsAppIdDataDatabaseTableRoute,
+  }
 
-const AppAppIdRouteRouteWithChildren = AppAppIdRouteRoute._addFileChildren(
-  AppAppIdRouteRouteChildren,
-)
+const ApplicationsAppIdRouteRouteWithChildren =
+  ApplicationsAppIdRouteRoute._addFileChildren(
+    ApplicationsAppIdRouteRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppAppIdRouteRoute: AppAppIdRouteRouteWithChildren,
+  ApplicationsAppIdRouteRoute: ApplicationsAppIdRouteRouteWithChildren,
+  AuthOauthRoute: AuthOauthRoute,
+  AuthRolesRoute: AuthRolesRoute,
+  AuthUsersRoute: AuthUsersRoute,
+  ApplicationsIndexRoute: ApplicationsIndexRoute,
+  AuthIndexRoute: AuthIndexRoute,
+  BenchmarksIndexRoute: BenchmarksIndexRoute,
+  TelemetryIndexRoute: TelemetryIndexRoute,
+  VectorsIndexRoute: VectorsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

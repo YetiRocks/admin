@@ -3,7 +3,7 @@ import { routeTree } from './routeTree.gen'
 
 export const router = createRouter({
   routeTree,
-  basepath: '/yeti-applications',
+  basepath: '/admin',
   defaultPreload: 'intent',
 })
 

@@ -3,7 +3,7 @@ import { api, BASE } from '../../../api'
 import { SchemaInfo } from '../../../types'
 import { groupTablesByDatabase } from '../../../components/DatabaseNav'
 
-export const Route = createFileRoute('/app/$appId/')({
+export const Route = createFileRoute('/applications/$appId/')({
   beforeLoad: async ({ params }) => {
     const schema = await api<SchemaInfo>(`${BASE}/schemas/${params.appId}`)
     const tables = schema?.tables || []
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/app/$appId/')({
       if (firstEntry) {
         const [db, tbls] = firstEntry
         throw redirect({
-          to: '/app/$appId/data/$database/$table',
+          to: '/applications/$appId/data/$database/$table',
           params: { appId: params.appId, database: db, table: tbls[0].name },
         })
       }
@@ -22,7 +22,7 @@ export const Route = createFileRoute('/app/$appId/')({
 
     // No tables — redirect to config
     throw redirect({
-      to: '/app/$appId/config',
+      to: '/applications/$appId/config',
       params: { appId: params.appId },
     })
   },

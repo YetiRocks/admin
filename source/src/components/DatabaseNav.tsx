@@ -43,7 +43,7 @@ export function DatabaseNav({ appId, tables, counts, fallbackDb }: Props) {
           {tbls.map(t => (
             <Link
               key={t.name}
-              to="/app/$appId/data/$database/$table"
+              to="/applications/$appId/data/$database/$table"
               params={{ appId, database: db, table: t.name }}
               className="db-nav-item"
               activeProps={{ className: 'db-nav-item active' }}

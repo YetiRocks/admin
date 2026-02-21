@@ -1,9 +1,9 @@
 import { createFileRoute, getRouteApi } from '@tanstack/react-router'
 import { useMemo } from 'react'
 
-const parentRoute = getRouteApi('/app/$appId')
+const parentRoute = getRouteApi('/applications/$appId')
 
-export const Route = createFileRoute('/app/$appId/config')({
+export const Route = createFileRoute('/applications/$appId/config')({
   component: ConfigView,
 })
 

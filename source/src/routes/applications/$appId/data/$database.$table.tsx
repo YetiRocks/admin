@@ -5,9 +5,9 @@ import { PaginatedResponse } from '../../../../types'
 import { DataTable } from '../../../../components/DataTable'
 
 const PAGE_SIZE = 25
-const parentRoute = getRouteApi('/app/$appId')
+const parentRoute = getRouteApi('/applications/$appId')
 
-export const Route = createFileRoute('/app/$appId/data/$database/$table')({
+export const Route = createFileRoute('/applications/$appId/data/$database/$table')({
   component: DataView,
 })
 
