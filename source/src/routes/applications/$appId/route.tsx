@@ -10,7 +10,6 @@ export const Route = createFileRoute('/applications/$appId')({
       api<SchemaInfo>(`${BASE}/schemas/${params.appId}`),
     ])
 
-    // Fetch record counts for all tables in parallel
     const tables = schema?.tables || []
     const countEntries = await Promise.all(
       tables.map(t =>
@@ -31,61 +30,61 @@ function AppLayout() {
   const { detail, schema, counts } = Route.useLoaderData()
   const location = useLocation()
 
-  const config = detail?.config
-  const enabled = config?.enabled !== false
   const tables = schema?.tables || []
-
-  const isConfig = location.pathname.endsWith('/config')
+  const hasTables = tables.length > 0 || (detail?.table_count ?? 0) > 0
   const isData = location.pathname.includes('/data/')
 
-  // Find first db/table for the Data link
   const groups = groupTablesByDatabase(tables, appId)
   const firstEntry = groups.entries().next().value
   const firstDb = firstEntry ? firstEntry[0] : null
   const firstTable = firstEntry ? firstEntry[1][0]?.name : null
 
   return (
-    <div className="detail-view">
-      <div className="detail-header">
-        <div className="detail-header-left">
-          <Link to="/" className="back-btn">&lt; All Apps</Link>
-        </div>
-        <span className="detail-app-name">{appId}</span>
-        <span className={`status-dot ${enabled ? 'running' : 'disabled'}`} />
-        <span className={`status-label ${enabled ? 'running' : 'disabled'}`}>
-          {enabled ? 'Running' : 'Disabled'}
-        </span>
-        {config?.extension && <span className="ext-badge">ext</span>}
-
-        <div className="subnav">
-          {firstDb && firstTable && (
-            <Link
-              to="/applications/$appId/data/$database/$table"
-              params={{ appId, database: firstDb, table: firstTable }}
-              className={`subnav-link ${isData ? 'active' : ''}`}
-            >
-              Data
-            </Link>
-          )}
+    <>
+      <nav className="demos-subnav" style={{ position: 'relative' }}>
+        <Link
+          to="/applications/$appId"
+          params={{ appId }}
+          className="subnav-link"
+          activeOptions={{ exact: true }}
+          activeProps={{ className: 'subnav-link active' }}
+        >
+          Overview
+        </Link>
+        {hasTables && (
           <Link
-            to="/applications/$appId/config"
-            params={{ appId }}
-            className={`subnav-link ${isConfig ? 'active' : ''}`}
+            to="/applications/$appId/data/$database/$table"
+            params={{ appId, database: firstDb || appId, table: firstTable || '_' }}
+            className={`subnav-link ${isData ? 'active' : ''}`}
           >
-            Config
+            Data
           </Link>
+        )}
+        <Link
+          to="/applications/$appId/config"
+          params={{ appId }}
+          className="subnav-link"
+          activeProps={{ className: 'subnav-link active' }}
+        >
+          Config
+        </Link>
+        <div style={{ position: 'absolute', left: 'var(--space-8)' }}>
+          <Link to="/applications" className="subnav-link">&larr; Applications</Link>
         </div>
-      </div>
+      </nav>
 
-      <div className="detail-body-layout">
-        {isData && tables.length > 0
-          ? <DatabaseNav appId={appId} tables={tables} counts={counts} fallbackDb={appId} />
-          : <div className="db-nav" />
-        }
-        <div className="detail-content">
+      {isData && tables.length > 0 ? (
+        <div className="detail-body-layout">
+          <DatabaseNav appId={appId} tables={tables} counts={counts} fallbackDb={appId} />
+          <div className="detail-content">
+            <Outlet />
+          </div>
+        </div>
+      ) : (
+        <div className="demo-content">
           <Outlet />
         </div>
-      </div>
-    </div>
+      )}
+    </>
   )
 }

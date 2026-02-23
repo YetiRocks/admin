@@ -35,6 +35,7 @@ export interface SchemaInfo {
 export interface TableInfo {
   name: string
   database: string
+  group?: string
   rest_url: string
   fields?: { name: string; type: string }[]
 }

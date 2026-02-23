@@ -16,17 +16,7 @@ pub struct SchemasResource;
 
 /// Get the applications directory path
 fn apps_dir() -> PathBuf {
-    let root = std::env::var("ROOT_DIRECTORY").unwrap_or_else(|_| "~/yeti".to_string());
-    let root_path = if root.starts_with("~/") {
-        if let Some(home) = std::env::var_os("HOME") {
-            PathBuf::from(home).join(root.strip_prefix("~/").unwrap())
-        } else {
-            PathBuf::from(&root)
-        }
-    } else {
-        PathBuf::from(&root)
-    };
-    root_path.join("applications")
+    get_apps_directory()
 }
 
 /// Parse schema.graphql to extract table definitions
@@ -121,18 +111,48 @@ impl Resource for SchemasResource {
             return not_found(&format!("Application '{}' not found", app_id));
         }
 
-        let schema_path = app_path.join("schema.graphql");
-        if !schema_path.exists() {
+        // Collect tables from schema.graphql and/or schemas/*.graphql
+        // Each file's tables are tagged with a group name (filename without extension)
+        let mut tables: Vec<serde_json::Value> = Vec::new();
+
+        let single = app_path.join("schema.graphql");
+        if single.exists() {
+            if let Ok(c) = std::fs::read_to_string(&single) {
+                for mut t in parse_schema(&c) {
+                    t["group"] = json!("schema");
+                    tables.push(t);
+                }
+            }
+        }
+
+        let schemas_dir = app_path.join("schemas");
+        if schemas_dir.is_dir() {
+            if let Ok(entries) = std::fs::read_dir(&schemas_dir) {
+                let mut files: Vec<_> = entries
+                    .filter_map(|e| e.ok())
+                    .filter(|e| e.path().extension().is_some_and(|ext| ext == "graphql"))
+                    .collect();
+                files.sort_by_key(|e| e.file_name());
+                for entry in files {
+                    let group = entry.path().file_stem()
+                        .map(|s| s.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    if let Ok(c) = std::fs::read_to_string(entry.path()) {
+                        for mut t in parse_schema(&c) {
+                            t["group"] = json!(group);
+                            tables.push(t);
+                        }
+                    }
+                }
+            }
+        }
+
+        if tables.is_empty() {
             return reply().json(json!({
                 "app_id": app_id,
                 "tables": [],
             }));
         }
-
-        let content = std::fs::read_to_string(&schema_path)
-            .map_err(|e| YetiError::Internal(format!("Cannot read schema: {}", e)))?;
-
-        let mut tables = parse_schema(&content);
 
         // Add REST URL for each table
         for table in &mut tables {

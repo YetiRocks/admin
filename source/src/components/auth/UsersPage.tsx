@@ -5,14 +5,23 @@ import { UserForm } from './UserForm'
 
 interface UsersPageProps {
   showToast: (message: string, type: 'success' | 'error') => void
+  triggerNew?: number
 }
 
-export function UsersPage({ showToast }: UsersPageProps) {
+export function UsersPage({ showToast, triggerNew }: UsersPageProps) {
   const [users, setUsers] = useState<User[]>([])
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (triggerNew && triggerNew > 0) {
+      setEditingUser(null)
+      setShowForm(true)
+    }
+  }, [triggerNew])
 
   const loadData = useCallback(async () => {
     try {
@@ -31,14 +40,16 @@ export function UsersPage({ showToast }: UsersPageProps) {
 
   useEffect(() => { loadData() }, [loadData])
 
-  const handleDelete = async (username: string) => {
-    if (!confirm(`Delete user "${username}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
     try {
-      await api(`${BASE}/users/${encodeURIComponent(username)}`, { method: 'DELETE' })
-      showToast(`User "${username}" deleted`, 'success')
+      await api(`${BASE}/users/${encodeURIComponent(deleteTarget)}`, { method: 'DELETE' })
+      showToast(`User "${deleteTarget}" deleted`, 'success')
+      setDeleteTarget(null)
       loadData()
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Delete failed', 'error')
+      setDeleteTarget(null)
     }
   }
 
@@ -69,59 +80,64 @@ export function UsersPage({ showToast }: UsersPageProps) {
 
   return (
     <>
-      <div className="page-header">
-        <div className="page-title">Users</div>
-        <button className="btn btn-primary" onClick={() => { setEditingUser(null); setShowForm(true) }}>
-          New User
-        </button>
-      </div>
-      <div className="page-body">
-        {users.length === 0 ? (
-          <div className="empty-state">No users found</div>
-        ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th className="col-actions">Actions</th>
+      {users.length === 0 ? (
+        <div className="empty-state">No users found</div>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th className="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.username}>
+                <td>{user.username}</td>
+                <td>{user.email || '-'}</td>
+                <td>{user.roleId}</td>
+                <td>
+                  <span className={`badge ${user.active !== false ? 'badge-success' : 'badge-error'}`}>
+                    {user.active !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="col-actions">
+                  <div className="btn-group">
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => { setEditingUser(user); setShowForm(true) }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => setDeleteTarget(user.username)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.username}>
-                  <td>{user.username}</td>
-                  <td>{user.email || '-'}</td>
-                  <td>{user.roleId}</td>
-                  <td>
-                    <span className={`badge ${user.active !== false ? 'badge-success' : 'badge-error'}`}>
-                      {user.active !== false ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="col-actions">
-                    <div className="btn-group">
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => { setEditingUser(user); setShowForm(true) }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(user.username)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 className="modal-title">Delete User?</h2>
+            <p className="modal-message">Are you sure you want to delete "{deleteTarget}"? This cannot be undone.</p>
+            <div className="modal-actions">
+              <button className="btn" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleDelete}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <UserForm

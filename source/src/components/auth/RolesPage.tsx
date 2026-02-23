@@ -5,13 +5,22 @@ import { RoleForm } from './RoleForm'
 
 interface RolesPageProps {
   showToast: (message: string, type: 'success' | 'error') => void
+  triggerNew?: number
 }
 
-export function RolesPage({ showToast }: RolesPageProps) {
+export function RolesPage({ showToast, triggerNew }: RolesPageProps) {
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (triggerNew && triggerNew > 0) {
+      setEditingRole(null)
+      setShowForm(true)
+    }
+  }, [triggerNew])
 
   const loadRoles = useCallback(async () => {
     try {
@@ -26,18 +35,16 @@ export function RolesPage({ showToast }: RolesPageProps) {
 
   useEffect(() => { loadRoles() }, [loadRoles])
 
-  const handleDelete = async (id: string) => {
-    if (id === 'super_user') {
-      showToast('Cannot delete super_user role', 'error')
-      return
-    }
-    if (!confirm(`Delete role "${id}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteTarget || deleteTarget === 'super_user') return
     try {
-      await api(`${BASE}/roles/${encodeURIComponent(id)}`, { method: 'DELETE' })
-      showToast(`Role "${id}" deleted`, 'success')
+      await api(`${BASE}/roles/${encodeURIComponent(deleteTarget)}`, { method: 'DELETE' })
+      showToast(`Role "${deleteTarget}" deleted`, 'success')
+      setDeleteTarget(null)
       loadRoles()
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Delete failed', 'error')
+      setDeleteTarget(null)
     }
   }
 
@@ -83,54 +90,59 @@ export function RolesPage({ showToast }: RolesPageProps) {
 
   return (
     <>
-      <div className="page-header">
-        <div className="page-title">Roles</div>
-        <button className="btn btn-primary" onClick={() => { setEditingRole(null); setShowForm(true) }}>
-          New Role
-        </button>
-      </div>
-      <div className="page-body">
-        {roles.length === 0 ? (
-          <div className="empty-state">No roles found</div>
-        ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Permissions</th>
-                <th className="col-actions">Actions</th>
+      {roles.length === 0 ? (
+        <div className="empty-state">No roles found</div>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Permissions</th>
+              <th className="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {roles.map((role) => (
+              <tr key={role.id}>
+                <td>{role.id}</td>
+                <td>{role.name}</td>
+                <td>{summarizePermissions(role.permissions)}</td>
+                <td className="col-actions">
+                  <div className="btn-group">
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => { setEditingRole(role); setShowForm(true) }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-sm btn-danger"
+                      onClick={() => setDeleteTarget(role.id)}
+                      disabled={role.id === 'super_user'}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {roles.map((role) => (
-                <tr key={role.id}>
-                  <td>{role.id}</td>
-                  <td>{role.name}</td>
-                  <td>{summarizePermissions(role.permissions)}</td>
-                  <td className="col-actions">
-                    <div className="btn-group">
-                      <button
-                        className="btn btn-sm"
-                        onClick={() => { setEditingRole(role); setShowForm(true) }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(role.id)}
-                        disabled={role.id === 'super_user'}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2 className="modal-title">Delete Role?</h2>
+            <p className="modal-message">Are you sure you want to delete "{deleteTarget}"? This cannot be undone.</p>
+            <div className="modal-actions">
+              <button className="btn" onClick={() => setDeleteTarget(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleDelete}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <RoleForm

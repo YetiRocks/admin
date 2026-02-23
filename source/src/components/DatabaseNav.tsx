@@ -11,10 +11,10 @@ interface Props {
 export function groupTablesByDatabase(tables: TableInfo[], fallbackDb?: string): Map<string, TableInfo[]> {
   const groups = new Map<string, TableInfo[]>()
   for (const t of tables) {
-    const db = t.database || fallbackDb || 'default'
-    const list = groups.get(db) || []
+    const key = t.database || fallbackDb || 'default'
+    const list = groups.get(key) || []
     list.push(t)
-    groups.set(db, list)
+    groups.set(key, list)
   }
   const sorted = new Map(
     [...groups.entries()]
@@ -24,7 +24,7 @@ export function groupTablesByDatabase(tables: TableInfo[], fallbackDb?: string):
   return sorted
 }
 
-export function DatabaseNav({ appId, tables, counts, fallbackDb }: Props) {
+export function DatabaseNav({ appId, tables, fallbackDb }: Props) {
   const groups = groupTablesByDatabase(tables, fallbackDb)
 
   if (tables.length === 0) {
@@ -39,7 +39,9 @@ export function DatabaseNav({ appId, tables, counts, fallbackDb }: Props) {
     <nav className="db-nav">
       {[...groups.entries()].map(([db, tbls]) => (
         <div key={db} className="db-nav-group">
-          <div className="db-nav-group-header">{db}</div>
+          <div className="panel-header">
+            <span className="panel-title">{db}</span>
+          </div>
           {tbls.map(t => (
             <Link
               key={t.name}
@@ -49,9 +51,6 @@ export function DatabaseNav({ appId, tables, counts, fallbackDb }: Props) {
               activeProps={{ className: 'db-nav-item active' }}
             >
               <span>{t.name}</span>
-              {counts[t.name] != null && (
-                <span className="db-nav-count">{counts[t.name]}</span>
-              )}
             </Link>
           ))}
         </div>

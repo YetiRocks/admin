@@ -40,7 +40,6 @@ function LoginPage({ onLogin }: { onLogin: (token: string) => void }) {
     <div className="login-page">
       <div className="login-card">
         <img src={`${import.meta.env.BASE_URL}logo_white.svg`} alt="Yeti" className="login-logo" />
-        <h1>Admin</h1>
         <form onSubmit={handleSubmit}>
           <input
             type="text"
@@ -109,37 +108,38 @@ function RootLayout() {
   }
 
   return (
-    <div className="admin-shell">
-      <nav className="admin-nav">
-        <div className="admin-nav-left">
-          <Link to="/">
-            <img src={`${import.meta.env.BASE_URL}logo_white.svg`} alt="Yeti" className="admin-logo" />
-          </Link>
+    <div className="app">
+      <nav className="nav">
+        <div className="nav-left">
+          <a href="/">
+            <img src={`${import.meta.env.BASE_URL}logo_white.svg`} alt="Yeti" className="nav-logo" />
+          </a>
         </div>
-        <div className="admin-nav-center">
-          <Link to="/applications" className="admin-nav-link" activeProps={{ className: 'active' }}>
+        <div className="nav-center">
+          <Link to="/applications" className="nav-link" activeProps={{ className: 'nav-link active' }}>
             Applications
           </Link>
-          <Link to="/auth" className="admin-nav-link" activeProps={{ className: 'active' }}>
+          <Link to="/auth" className="nav-link" activeProps={{ className: 'nav-link active' }}>
             Auth
           </Link>
-          <Link to="/telemetry" className="admin-nav-link" activeProps={{ className: 'active' }}>
+          <Link to="/telemetry" className="nav-link" activeProps={{ className: 'nav-link active' }}>
             Telemetry
           </Link>
-          <Link to="/vectors" className="admin-nav-link" activeProps={{ className: 'active' }}>
+          <Link to="/vectors" className="nav-link" activeProps={{ className: 'nav-link active' }}>
             Vectors
           </Link>
-          <Link to="/benchmarks" className="admin-nav-link" activeProps={{ className: 'active' }}>
+          <Link to="/benchmarks" className="nav-link" activeProps={{ className: 'nav-link active' }}>
             Benchmarks
           </Link>
         </div>
-        <div className="admin-nav-right">
-          <button className="admin-logout" onClick={handleLogout}>Log Out</button>
+        <div className="nav-right">
+          <button className="btn nav-action-btn" onClick={handleLogout}>Log Out</button>
         </div>
       </nav>
-
-      <div className="admin-content">
-        <Outlet />
+      <div className="page">
+        <div className="admin-layout">
+          <Outlet />
+        </div>
       </div>
 
       <ToastContainer />

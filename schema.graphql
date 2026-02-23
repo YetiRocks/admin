@@ -1,4 +1,4 @@
-type AppValidation @table(database: "yeti-applications") @export {
+type AppValidation @table(database: "admin") @export {
     id: ID!
     appId: String! @indexed
     version: String! @indexed
