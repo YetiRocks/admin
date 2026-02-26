@@ -1,13 +1,13 @@
 import { createRootRoute, Outlet, Link, useRouter } from '@tanstack/react-router'
 import { useState, useEffect, useCallback } from 'react'
 import { useToast } from '../hooks/useToast'
-import { api, AUTH_BASE, setToken, getToken } from '../api'
+import { api, AUTH_BASE } from '../api'
 
 export const Route = createRootRoute({
   component: RootLayout,
 })
 
-function LoginPage({ onLogin }: { onLogin: (token: string) => void }) {
+function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -22,13 +22,14 @@ function LoginPage({ onLogin }: { onLogin: (token: string) => void }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        credentials: 'same-origin',
       })
       if (!res.ok) {
         const text = await res.text()
         throw new Error(text || 'Login failed')
       }
-      const data = await res.json()
-      onLogin(data.access_token || data.accessToken || data.token)
+      // Cookie is set by the server response (httpOnly)
+      onLogin()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
@@ -70,16 +71,15 @@ function RootLayout() {
   const router = useRouter()
 
   const checkAuth = useCallback(async () => {
-    const token = getToken()
-    if (!token) {
-      setAuthenticated(false)
-      return
-    }
     try {
-      await api(`${AUTH_BASE}/auth`)
-      setAuthenticated(true)
+      const res = await fetch(`${AUTH_BASE}/auth`, { credentials: 'same-origin' })
+      if (res.ok) {
+        const data = await res.json()
+        setAuthenticated(data.authenticated === true)
+      } else {
+        setAuthenticated(false)
+      }
     } catch {
-      setToken(null)
       setAuthenticated(false)
     }
   }, [])
@@ -88,13 +88,19 @@ function RootLayout() {
     checkAuth()
   }, [checkAuth])
 
-  const handleLogin = (token: string) => {
-    setToken(token)
+  const handleLogin = () => {
     setAuthenticated(true)
   }
 
-  const handleLogout = () => {
-    setToken(null)
+  const handleLogout = async () => {
+    try {
+      await fetch(`${AUTH_BASE}/login`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+      })
+    } catch {
+      // Best-effort logout
+    }
     setAuthenticated(false)
     router.navigate({ to: '/' })
   }

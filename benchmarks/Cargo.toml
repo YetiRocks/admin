@@ -1,0 +1,38 @@
+[package]
+name = "yeti-benchmarks"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["native-tls", "json", "stream"] }
+tokio-tungstenite = { version = "0.24", features = ["native-tls"] }
+native-tls = "0.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+uuid = { version = "1", features = ["v4", "fast-rng"] }
+rand = "0.9"
+hdrhistogram = "7"
+chrono = "0.4"
+futures-util = "0.3"
+
+[[bin]]
+name = "load-rest"
+path = "src/bin/load_rest.rs"
+
+[[bin]]
+name = "load-graphql"
+path = "src/bin/load_graphql.rs"
+
+[[bin]]
+name = "load-vector"
+path = "src/bin/load_vector.rs"
+
+[[bin]]
+name = "load-realtime"
+path = "src/bin/load_realtime.rs"
+
+[[bin]]
+name = "load-blob"
+path = "src/bin/load_blob.rs"

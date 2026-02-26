@@ -1161,6 +1161,42 @@ td.col-actions { text-align: right; }
 .metrics-section-header { font-size: var(--font-size-xs); font-weight: 600; color: var(--color-grey); text-transform: uppercase; letter-spacing: 0.05em; padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border-primary); margin-bottom: var(--space-3); }
 .metrics-content .metrics-grid { padding: 0; overflow: visible; flex: none; }
 
+/* ── Benchmarks ── */
+.benchmarks-content { flex: 1; overflow-y: auto; padding: var(--space-4); }
+.benchmarks-content .bench-grid { padding: 0; overflow: visible; flex: none; grid-template-columns: repeat(auto-fill, minmax(max(220px, calc((100% - var(--space-4) * 5) / 6)), 1fr)); }
+.bench-error { padding: var(--space-2) var(--space-4); margin-bottom: var(--space-4); background: rgba(209, 105, 105, 0.15); border: 1px solid var(--color-error); border-radius: var(--radius-sm); color: var(--color-error); font-size: var(--font-size-sm); }
+.bench-card { cursor: pointer; transition: border-color var(--transition-fast), box-shadow var(--transition-fast); display: flex; flex-direction: column; gap: var(--space-3); }
+.bench-card:hover { border-color: rgba(255, 255, 255, 0.15); }
+.bench-card.bench-selected { border-color: var(--color-success); box-shadow: 0 0 0 1px var(--color-success); }
+.bench-card.bench-warming { border-color: var(--color-warning); }
+.bench-card.bench-running { border-color: var(--color-info); }
+.bench-card.bench-overdue { border-color: var(--color-error); }
+.bench-card.bench-disabled { opacity: 0.5; }
+.bench-card-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.bench-card-header .metric-name { margin-bottom: 0; color: #fff; font-weight: 600; }
+.bench-card-header .btn { flex-shrink: 0; }
+.bench-timer { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-xs); font-family: var(--font-family-mono); color: var(--color-info); white-space: nowrap; }
+.bench-timer-warming { color: var(--color-warning); }
+.bench-timer-overdue { color: var(--color-error); }
+.bench-spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: bench-spin 0.8s linear infinite; }
+@keyframes bench-spin { to { transform: rotate(360deg); } }
+.bench-card-config { font-size: var(--font-size-xs); color: var(--color-grey); }
+.bench-config-label { cursor: pointer; }
+.bench-config-label:hover { color: var(--color-white); }
+.bench-config-editor { display: flex; flex-direction: column; gap: var(--space-2); }
+.bench-config-editor label { display: flex; align-items: center; gap: var(--space-1); font-size: var(--font-size-xs); color: var(--color-grey); }
+.bench-config-editor input { width: 60px; padding: var(--space-1); background: var(--color-white-overlay); border: 1px solid var(--color-border-primary); border-radius: var(--radius-sm); color: var(--color-white); font-size: var(--font-size-xs); font-family: var(--font-family-mono); }
+.bench-config-actions { display: flex; gap: var(--space-2); }
+.bench-card-stats { display: flex; gap: var(--space-4); }
+.bench-stat { display: flex; flex-direction: column; }
+.bench-stat-value { font-size: var(--font-size-lg); font-weight: 700; color: var(--color-white); }
+.bench-stat-label { font-size: var(--font-size-xs); color: var(--color-grey); }
+.bench-history { padding: 0 0 var(--space-4); }
+.bench-history .data-table { width: 100%; }
+@media (max-width: 1200px) { .benchmarks-content .bench-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+@media (max-width: 900px) { .benchmarks-content .bench-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } .bench-card-stats { flex-wrap: wrap; gap: var(--space-2); } }
+@media (max-width: 600px) { .benchmarks-content .bench-grid { grid-template-columns: 1fr; max-width: none; } .bench-history .data-table th:nth-child(3), .bench-history .data-table td:nth-child(3), .bench-history .data-table th:nth-child(5), .bench-history .data-table td:nth-child(5) { display: none; } }
+
 /* ── Auth Dashboard ── */
 .auth-dashboard { padding: var(--space-6); }
 .auth-dashboard h1 { font-size: var(--font-size-xl); color: #fff; margin-bottom: var(--space-4); }

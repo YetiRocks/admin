@@ -1,2 +1,4 @@
 source/node_modules/
+source/.tanstack/
 web/
+benchmarks/target/

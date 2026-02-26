@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-
-const BASE = '/yeti-benchmarks'
+import { BASE } from '../../api'
 
 interface TestDef {
   id: string
@@ -11,17 +10,18 @@ interface TestDef {
 }
 
 const TESTS: TestDef[] = [
-  { id: 'rest-read', name: 'REST Reads', binary: 'throughput', duration: 30, vus: 50 },
-  { id: 'rest-write', name: 'REST Writes', binary: 'throughput', duration: 30, vus: 50 },
-  { id: 'rest-update', name: 'REST Update', binary: 'load-rest-crud', duration: 30, vus: 50 },
-  { id: 'rest-join', name: 'REST Join', binary: 'load-rest-relationships', duration: 30, vus: 50 },
+  { id: 'rest-read', name: 'REST Reads', binary: 'load-rest', duration: 30, vus: 50 },
+  { id: 'rest-write', name: 'REST Writes', binary: 'load-rest', duration: 30, vus: 50 },
+  { id: 'rest-update', name: 'REST Update', binary: 'load-rest', duration: 30, vus: 50 },
+  { id: 'rest-join', name: 'REST Join', binary: 'load-rest', duration: 30, vus: 50 },
   { id: 'graphql-read', name: 'GraphQL Reads', binary: 'load-graphql', duration: 30, vus: 50 },
   { id: 'graphql-mutation', name: 'GraphQL Mutations', binary: 'load-graphql', duration: 30, vus: 50 },
-  { id: 'vector-embed', name: 'Vector Embed', binary: 'load-vector-embed', duration: 30, vus: 50 },
-  { id: 'vector-search', name: 'Vector Search', binary: 'load-vector-search', duration: 30, vus: 50 },
-  { id: 'ws', name: 'WebSocket', binary: 'load-ws', duration: 30, vus: 50 },
-  { id: 'sse', name: 'SSE Streaming', binary: 'load-sse', duration: 30, vus: 50 },
-  { id: 'blob-retrieval', name: '150k Blob Retrieval', binary: 'load-blob-storage', duration: 30, vus: 50 },
+  { id: 'graphql-join', name: 'GraphQL Join', binary: 'load-graphql', duration: 30, vus: 50 },
+  { id: 'vector-embed', name: 'Vector Embed', binary: 'load-vector', duration: 30, vus: 50 },
+  { id: 'vector-search', name: 'Vector Search', binary: 'load-vector', duration: 30, vus: 50 },
+  { id: 'ws', name: 'WebSocket', binary: 'load-realtime', duration: 30, vus: 50 },
+  { id: 'sse', name: 'SSE Streaming', binary: 'load-realtime', duration: 30, vus: 50 },
+  { id: 'blob-retrieval', name: '150k Blob Retrieval', binary: 'load-blob', duration: 30, vus: 50 },
 ]
 
 interface TestConfig {
@@ -98,7 +98,7 @@ export default function BenchmarksPanel() {
 
   const fetchLatestResults = useCallback(async () => {
     try {
-      const resp = await fetch(`${BASE}/best-results`)
+      const resp = await fetch(`${BASE}/bestresults`)
       if (resp.ok) {
         const data = await resp.json()
         const map: Record<string, LatestResult> = {}
@@ -215,18 +215,19 @@ export default function BenchmarksPanel() {
   const runningTest = runner.test
 
   return (
-    <div>
-      <header className="header">
-        <div className="header-left">
-          <img src="logo_white.svg" alt="Yeti" className="logo" />
-        </div>
-        <div className="header-title">Benchmarks</div>
-      </header>
+    <div className="panel">
+      <div className="panel-toolbar">
+        <span className="toolbar-label">Benchmarks ({TESTS.length} tests)</span>
+        {isBusy && runningTest && (
+          <span className="badge badge-success">
+            {runner.status === 'warming' ? 'Warming' : 'Running'}: {TESTS.find(t => t.id === runningTest)?.name}
+          </span>
+        )}
+      </div>
+      <div className="benchmarks-content">
+        {error && <div className="bench-error">{error}</div>}
 
-      <div className="app">
-        {error && <div className="error-msg">{error}</div>}
-
-        <div className="test-grid">
+        <div className="metrics-grid bench-grid">
           {TESTS.map(test => {
             const isThisTest = runningTest === test.id
             return (
@@ -255,6 +256,9 @@ export default function BenchmarksPanel() {
             runs={history}
           />
         )}
+      </div>
+      <div className="panel-footer">
+        <span>{Object.keys(latestResults).length} tests with results</span>
       </div>
     </div>
   )
@@ -303,34 +307,31 @@ function TestCard({ test, config, latest, phase, isDisabled, isSelected, warmupS
   }
 
   const cardClass = [
-    'test-card',
-    phase === 'warming' ? 'warming' : '',
-    phase === 'running' && !isOverdue ? 'running' : '',
-    isOverdue ? 'overdue' : '',
-    isSelected ? 'selected' : '',
+    'metric-card bench-card',
+    phase === 'warming' ? 'bench-warming' : '',
+    phase === 'running' && !isOverdue ? 'bench-running' : '',
+    isOverdue ? 'bench-overdue' : '',
+    isSelected ? 'bench-selected' : '',
+    isDisabled ? 'bench-disabled' : '',
   ].filter(Boolean).join(' ')
 
   return (
-    <div
-      className={cardClass}
-      onClick={onClick}
-      style={{ cursor: 'pointer' }}
-    >
-      <div className="card-title-row">
-        <h3>{test.name}</h3>
+    <div className={cardClass} onClick={onClick}>
+      <div className="bench-card-header">
+        <div className="metric-name">{test.name}</div>
         {phase === 'warming' ? (
-          <div className="timer-box warming-box">
-            <span className="spinner" />
+          <span className="bench-timer bench-timer-warming">
+            <span className="bench-spinner" />
             Warming {warmupSecs.toFixed(0)}s
-          </div>
+          </span>
         ) : phase === 'running' ? (
-          <div className={`timer-box ${isOverdue ? 'overdue-box' : ''}`}>
-            <span className="spinner" />
+          <span className={`bench-timer ${isOverdue ? 'bench-timer-overdue' : ''}`}>
+            <span className="bench-spinner" />
             {elapsedSecs.toFixed(0)}s / {configuredDuration}s
-          </div>
+          </span>
         ) : (
           <button
-            className="run-btn"
+            className="btn btn-sm btn-primary"
             disabled={isDisabled}
             onClick={(e) => { e.stopPropagation(); onRun(); }}
           >
@@ -338,31 +339,32 @@ function TestCard({ test, config, latest, phase, isDisabled, isSelected, warmupS
           </button>
         )}
       </div>
-      <div className="card-config">
+
+      <div className="bench-card-config">
         {editing ? (
-          <div className="config-editor" onClick={e => e.stopPropagation()}>
+          <div className="bench-config-editor" onClick={e => e.stopPropagation()}>
             <label>Duration: <input type="number" value={editDuration} onChange={e => setEditDuration(+e.target.value)} min={1} />s</label>
             <label>VUs: <input type="number" value={editVus} onChange={e => setEditVus(+e.target.value)} min={1} /></label>
-            <div className="config-actions">
-              <button className="config-save" onClick={saveEdit}>Save</button>
-              <button className="config-cancel" onClick={cancelEdit}>Cancel</button>
+            <div className="bench-config-actions">
+              <button className="btn btn-sm btn-primary" onClick={saveEdit}>Save</button>
+              <button className="btn btn-sm" onClick={cancelEdit}>Cancel</button>
             </div>
           </div>
         ) : (
-          <div className="description" onClick={startEdit} title="Click to edit config">
+          <div className="bench-config-label" onClick={startEdit} title="Click to edit config">
             {formatDescription(config)}
           </div>
         )}
       </div>
 
-      <div className="card-stats">
-        <div className="stat">
-          <div className="stat-label">Throughput</div>
-          <div className="stat-value highlight">{hasData ? `${formatNumber(results.extrapolatedThroughput ? parseFloat(results.extrapolatedThroughput) : results.throughput!)} /s` : '—'}</div>
+      <div className="bench-card-stats">
+        <div className="bench-stat">
+          <span className="bench-stat-value">{hasData ? `${formatNumber(results.extrapolatedThroughput ? parseFloat(results.extrapolatedThroughput) : results.throughput!)} /s` : '—'}</span>
+          <span className="bench-stat-label">throughput</span>
         </div>
-        <div className="stat">
-          <div className="stat-label">Latency (P95)</div>
-          <div className="stat-value">{hasData ? formatMs(results.p50 ?? 0) : '—'}</div>
+        <div className="bench-stat">
+          <span className="bench-stat-value">{hasData ? formatMs(results.p50 ?? 0) : '—'}</span>
+          <span className="bench-stat-label">p95 latency</span>
         </div>
       </div>
     </div>
@@ -375,45 +377,40 @@ interface HistoryPanelProps {
 }
 
 function HistoryPanel({ testName, runs }: HistoryPanelProps) {
-  if (runs.length === 0) {
-    return (
-      <div className="history-section">
-        <h3>History: {testName}</h3>
-        <p className="no-data">No runs recorded yet</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="history-section">
-      <h3>History: {testName} ({runs.length} runs)</h3>
-      <table className="history-table">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Throughput</th>
-            <th>Extrapolated</th>
-            <th>Duration</th>
-            <th>Summary</th>
-          </tr>
-        </thead>
-        <tbody>
-          {runs.map(run => {
-            let parsed: Record<string, number> = {}
-            try { parsed = JSON.parse(run.results || '{}') } catch { /* ignore */ }
+    <div className="bench-history">
+      <div className="metrics-section-header">History: {testName} ({runs.length} runs)</div>
+      {runs.length === 0 ? (
+        <div className="empty-state">No runs recorded yet</div>
+      ) : (
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Throughput</th>
+              <th>Extrapolated</th>
+              <th>Duration</th>
+              <th>Summary</th>
+            </tr>
+          </thead>
+          <tbody>
+            {runs.map(run => {
+              let parsed: Record<string, number> = {}
+              try { parsed = JSON.parse(run.results || '{}') } catch { /* ignore */ }
 
-            return (
-              <tr key={run.id}>
-                <td>{new Date(run.timestamp).toLocaleString()}</td>
-                <td>{formatNumber(parsed.throughput ?? 0)} /s</td>
-                <td>{run.extrapolatedThroughput ? formatNumber(parseFloat(run.extrapolatedThroughput)) + ' /s' : '-'}</td>
-                <td>{run.durationSecs?.toFixed(1)}s</td>
-                <td>{run.summary || '-'}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+              return (
+                <tr key={run.id}>
+                  <td>{new Date(run.timestamp).toLocaleString()}</td>
+                  <td>{formatNumber(parsed.throughput ?? 0)} /s</td>
+                  <td>{run.extrapolatedThroughput ? formatNumber(parseFloat(run.extrapolatedThroughput)) + ' /s' : '-'}</td>
+                  <td>{run.durationSecs?.toFixed(1)}s</td>
+                  <td>{run.summary || '-'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      )}
     </div>
   )
 }
