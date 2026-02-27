@@ -80,11 +80,24 @@ function formatDescription(cfg: TestConfig): string {
   return `${cfg.duration}s Duration. ${cfg.vus} VUs.`
 }
 
+function ListIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <line x1="5" y1="3" x2="14" y2="3" />
+      <line x1="5" y1="8" x2="14" y2="8" />
+      <line x1="5" y1="13" x2="14" y2="13" />
+      <circle cx="2" cy="3" r="1" fill="currentColor" stroke="none" />
+      <circle cx="2" cy="8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="2" cy="13" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 export default function BenchmarksPanel() {
   const [latestResults, setLatestResults] = useState<Record<string, LatestResult>>({})
   const [configs, setConfigs] = useState<Record<string, TestConfig>>({})
   const [runner, setRunner] = useState<RunnerState>({ status: 'idle' })
-  const [selectedTest, setSelectedTest] = useState<string | null>(null)
+  const [historyModal, setHistoryModal] = useState<{ testId: string; testName: string } | null>(null)
   const [history, setHistory] = useState<HistoryRun[]>([])
   const [error, setError] = useState<string | null>(null)
   const pollRef = useRef<number | null>(null)
@@ -127,9 +140,6 @@ export default function BenchmarksPanel() {
           error: data.lastError,
         }
 
-        // Client-side timeout: if server still reports "running" but elapsed
-        // exceeds configured duration by 10s, treat it as idle. Handles stale
-        // server state from PID reuse, zombie processes, or old server code.
         const isOverdue = state.status === 'running'
           && (state.configuredDuration ?? 0) > 0
           && (state.elapsedSecs ?? 0) > (state.configuredDuration ?? 0) + 10
@@ -139,7 +149,6 @@ export default function BenchmarksPanel() {
 
         setRunner(state)
 
-        // Update configs from runner response
         if (data.configs) {
           const cfgMap: Record<string, TestConfig> = {}
           for (const c of data.configs) {
@@ -152,18 +161,18 @@ export default function BenchmarksPanel() {
           clearInterval(pollRef.current)
           pollRef.current = null
           fetchLatestResults()
-          if (selectedTest) fetchHistory(selectedTest)
+          if (historyModal) fetchHistory(historyModal.testId)
           if (state.error) setError(state.error)
         }
       }
     } catch {
       // Server may not be ready yet
     }
-  }, [fetchLatestResults, selectedTest])
+  }, [fetchLatestResults, historyModal])
 
   const fetchHistory = useCallback(async (testName: string) => {
     try {
-      const resp = await fetch(`${BASE}/TestRun?testName==${testName}&limit=10`)
+      const resp = await fetch(`${BASE}/TestRun?testName==${testName}`)
       if (resp.ok) {
         const data = await resp.json()
         const runs: HistoryRun[] = Array.isArray(data) ? data : data.data || []
@@ -214,11 +223,14 @@ export default function BenchmarksPanel() {
     }
   }
 
-  const handleCardClick = (testId: string) => {
-    setSelectedTest(testId === selectedTest ? null : testId)
-    if (testId !== selectedTest) {
-      fetchHistory(testId)
-    }
+  const openHistory = (testId: string, testName: string) => {
+    setHistoryModal({ testId, testName })
+    fetchHistory(testId)
+  }
+
+  const closeHistory = () => {
+    setHistoryModal(null)
+    setHistory([])
   }
 
   const isBusy = runner.status === 'warming' || runner.status === 'running'
@@ -226,14 +238,14 @@ export default function BenchmarksPanel() {
 
   return (
     <div className="panel">
-      <div className="panel-toolbar">
-        <span className="toolbar-label">Benchmarks ({TESTS.length} tests)</span>
+      <nav className="demos-subnav">
+        <span className="subnav-link active">Benchmarks ({TESTS.length} tests)</span>
         {isBusy && runningTest && (
           <span className="badge badge-success">
             {runner.status === 'warming' ? 'Warming' : 'Running'}: {TESTS.find(t => t.id === runningTest)?.name}
           </span>
         )}
-      </div>
+      </nav>
       <div className="benchmarks-content">
         {error && <div className="bench-error">{error}</div>}
 
@@ -248,28 +260,28 @@ export default function BenchmarksPanel() {
                 latest={latestResults[test.id]}
                 phase={isThisTest ? runner.status : 'idle'}
                 isDisabled={isBusy && !isThisTest}
-                isSelected={selectedTest === test.id}
                 warmupSecs={isThisTest ? (runner.warmupSecs ?? 0) : 0}
                 elapsedSecs={isThisTest ? (runner.elapsedSecs ?? 0) : 0}
                 configuredDuration={isThisTest ? (runner.configuredDuration ?? 0) : 0}
                 onRun={() => startTest(test.id)}
-                onClick={() => handleCardClick(test.id)}
+                onOpenHistory={() => openHistory(test.id, test.name)}
                 onSaveConfig={(cfg) => saveConfig(test.id, cfg)}
               />
             )
           })}
         </div>
-
-        {selectedTest && (
-          <HistoryPanel
-            testName={selectedTest}
-            runs={history}
-          />
-        )}
       </div>
       <div className="panel-footer">
         <span>{Object.keys(latestResults).length} tests with results</span>
       </div>
+
+      {historyModal && (
+        <HistoryModal
+          testName={historyModal.testName}
+          runs={history}
+          onClose={closeHistory}
+        />
+      )}
     </div>
   )
 }
@@ -280,16 +292,15 @@ interface TestCardProps {
   latest?: LatestResult
   phase: 'idle' | 'warming' | 'running'
   isDisabled: boolean
-  isSelected: boolean
   warmupSecs: number
   elapsedSecs: number
   configuredDuration: number
   onRun: () => void
-  onClick: () => void
+  onOpenHistory: () => void
   onSaveConfig: (cfg: TestConfig) => void
 }
 
-function TestCard({ test, config, latest, phase, isDisabled, isSelected, warmupSecs, elapsedSecs, configuredDuration, onRun, onClick, onSaveConfig }: TestCardProps) {
+function TestCard({ test, config, latest, phase, isDisabled, warmupSecs, elapsedSecs, configuredDuration, onRun, onOpenHistory, onSaveConfig }: TestCardProps) {
   const results = latest?.results
   const hasData = results && results.throughput
   const [editing, setEditing] = useState(false)
@@ -321,12 +332,11 @@ function TestCard({ test, config, latest, phase, isDisabled, isSelected, warmupS
     phase === 'warming' ? 'bench-warming' : '',
     phase === 'running' && !isOverdue ? 'bench-running' : '',
     isOverdue ? 'bench-overdue' : '',
-    isSelected ? 'bench-selected' : '',
     isDisabled ? 'bench-disabled' : '',
   ].filter(Boolean).join(' ')
 
   return (
-    <div className={cardClass} onClick={onClick}>
+    <div className={cardClass}>
       <div className="bench-card-header">
         <div className="metric-name">{test.name}</div>
         {phase === 'warming' ? (
@@ -376,51 +386,68 @@ function TestCard({ test, config, latest, phase, isDisabled, isSelected, warmupS
           <span className="bench-stat-value">{hasData ? formatMs(results.p50 ?? 0) : '—'}</span>
           <span className="bench-stat-label">p95 latency</span>
         </div>
+        {hasData && (
+          <button
+            className="bench-history-btn"
+            onClick={(e) => { e.stopPropagation(); onOpenHistory(); }}
+            title="View run history"
+          >
+            <ListIcon />
+          </button>
+        )}
       </div>
     </div>
   )
 }
 
-interface HistoryPanelProps {
+interface HistoryModalProps {
   testName: string
   runs: HistoryRun[]
+  onClose: () => void
 }
 
-function HistoryPanel({ testName, runs }: HistoryPanelProps) {
+function HistoryModal({ testName, runs, onClose }: HistoryModalProps) {
   return (
-    <div className="bench-history">
-      <div className="metrics-section-header">History: {testName} ({runs.length} runs)</div>
-      {runs.length === 0 ? (
-        <div className="empty-state">No runs recorded yet</div>
-      ) : (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Throughput</th>
-              <th>Extrapolated</th>
-              <th>Duration</th>
-              <th>Summary</th>
-            </tr>
-          </thead>
-          <tbody>
-            {runs.map(run => {
-              let parsed: Record<string, number> = {}
-              try { parsed = JSON.parse(run.results || '{}') } catch { /* ignore */ }
-
-              return (
-                <tr key={run.id}>
-                  <td>{new Date(run.timestamp).toLocaleString()}</td>
-                  <td>{formatNumber(parsed.throughput ?? 0)} /s</td>
-                  <td>{run.extrapolatedThroughput ? formatNumber(parseFloat(run.extrapolatedThroughput)) + ' /s' : '-'}</td>
-                  <td>{run.durationSecs?.toFixed(1)}s</td>
-                  <td>{run.summary || '-'}</td>
+    <div className="bench-modal-overlay" onClick={onClose}>
+      <div className="bench-modal" onClick={e => e.stopPropagation()}>
+        <div className="bench-modal-header">
+          <span className="bench-modal-title">{testName} — Run History ({runs.length})</span>
+          <button className="bench-modal-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="bench-modal-body">
+          {runs.length === 0 ? (
+            <div className="empty-state">No runs recorded yet</div>
+          ) : (
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Throughput</th>
+                  <th>Extrapolated</th>
+                  <th>Duration</th>
+                  <th>Summary</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      )}
+              </thead>
+              <tbody>
+                {runs.map(run => {
+                  let parsed: Record<string, number> = {}
+                  try { parsed = JSON.parse(run.results || '{}') } catch { /* ignore */ }
+
+                  return (
+                    <tr key={run.id}>
+                      <td>{new Date(run.timestamp).toLocaleString()}</td>
+                      <td>{formatNumber(parsed.throughput ?? 0)} /s</td>
+                      <td>{run.extrapolatedThroughput ? formatNumber(parseFloat(run.extrapolatedThroughput)) + ' /s' : '-'}</td>
+                      <td>{run.durationSecs?.toFixed(1)}s</td>
+                      <td>{run.summary || '-'}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

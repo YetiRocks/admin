@@ -218,8 +218,9 @@ impl Resource for BenchmarksResource {
         };
 
         // Find the benchmark binary
+        // Primary: cargo build output (no manual copy needed)
         let root = get_root_directory();
-        let bin_dir = root.join("benchmarks");
+        let bin_dir = root.join("applications/admin/benchmarks/target/release");
         let bin_path = bin_dir.join(test_def.binary);
 
         if !bin_path.exists() {
